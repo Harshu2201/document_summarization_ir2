@@ -1,15 +1,9 @@
-"""Flask web interface for the IR Document Summarization System.
+"""Dark-themed Flask Web Interface for the Document Summarizer.
 
-Features:
-- Paste text directly into the browser.
-- Upload TXT, PDF, or DOCX documents.
-- Select a summary ratio between 30% and 40%.
-- Reuses the same TF-IDF summarization core used by the CLI.
-
-Run:
+Styled to match the Digital Forensic Image Analysis Tool web UI.
+Run with:
     python app.py
-Then open:
-    http://127.0.0.1:5000
+Then open http://127.0.0.1:5001 in Chrome.
 """
 
 from pathlib import Path
@@ -27,373 +21,217 @@ from document_summarizer import (
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 
-HTML = """
-<!doctype html>
+HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>IR Summary | Document Summarizer</title>
+<title>Document Summarization Tool</title>
 <style>
-    :root {
-        color-scheme: light;
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        color: #172033;
-        background: #f3f6fb;
-        font-synthesis: none;
-        text-rendering: optimizeLegibility;
-        --ink: #172033;
-        --muted: #64748b;
-        --line: #dbe3ef;
-        --accent: #3156d3;
-        --accent-dark: #2343ad;
-    }
     * { box-sizing: border-box; }
-    body {
-        min-width: 320px;
-        min-height: 100vh;
-        margin: 0;
-        background:
-            radial-gradient(ellipse at 12% 0%, rgba(80, 119, 238, .13), transparent 34rem),
-            #f3f6fb;
-    }
-    .wrap { width: min(100% - 40px, 1120px); margin: 0 auto; padding-bottom: 48px; }
-    .topbar {
-        display: flex;
-        min-height: 82px;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        border-bottom: 1px solid rgba(203, 214, 231, .75);
-    }
-    .brand { display: inline-flex; align-items: center; gap: 11px; color: #172b55; font-size: .96rem; font-weight: 800; text-decoration: none; }
-    .brand-mark {
-        display: grid;
-        width: 38px;
-        height: 38px;
-        place-items: center;
-        border-radius: 12px;
-        background: #3156d3;
-        box-shadow: 0 6px 14px rgba(49, 86, 211, .22);
-        color: #fff;
-        font-size: .86rem;
-        letter-spacing: -.04em;
-    }
-    .top-link { color: #52627e; font-size: .9rem; font-weight: 650; text-decoration: none; }
-    .top-link:hover { color: var(--accent); }
-    .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(210px, .55fr);
-        align-items: end;
-        gap: 36px;
-        padding: 68px 0 38px;
-    }
-    .hero-copy { max-width: 700px; }
-    .eyebrow {
-        margin: 0 0 10px;
-        color: var(--accent);
-        font-size: .75rem;
-        font-weight: 800;
-        letter-spacing: .14em;
-        text-transform: uppercase;
-    }
-    h1 { margin: 0; color: #102044; font-size: clamp(2rem, 5vw, 3.25rem); letter-spacing: -.045em; line-height: 1.08; }
-    h2 { margin: 0 0 12px; color: #102044; font-size: 1.05rem; }
-    .sub { max-width: 670px; margin: 14px 0 0; color: var(--muted); font-size: 1.05rem; line-height: 1.7; }
-    .hero-note {
-        padding: 18px 20px;
-        border: 1px solid #dfe7f7;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, .76);
-        color: #455675;
-        font-size: .9rem;
-        line-height: 1.65;
-    }
-    .hero-note strong { display: block; margin-bottom: 4px; color: #1d3158; }
-    .card {
-        margin-bottom: 20px;
-        padding: clamp(22px, 4vw, 36px);
-        border: 1px solid rgba(219, 227, 239, .9);
-        border-radius: 20px;
-        background: rgba(255, 255, 255, .96);
-        box-shadow: 0 18px 50px rgba(25, 45, 85, .08);
-    }
-    .form-card { padding: clamp(24px, 4vw, 40px); }
-    .section-heading { margin-bottom: 24px; }
-    .section-heading h2 { margin-bottom: 6px; font-size: 1.25rem; }
-    .section-heading p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.6; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .field { min-width: 0; }
-    label { display: block; margin-bottom: 9px; color: #233454; font-size: .92rem; font-weight: 700; }
-    textarea, input[type=file], select {
+    body { font-family: Segoe UI, Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 24px; }
+    .container { max-width: 1200px; margin: auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 14px; }
+    h1 { margin: 0; color: #38bdf8; font-size: 26px; }
+    .badge-top { background: #1e293b; color: #7dd3fc; border: 1px solid #334155; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+    .panel { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 20px; }
+    .panel h3 { margin-top: 0; color: #7dd3fc; font-size: 16px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px; }
+    label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+    input[type="file"], select, textarea {
         width: 100%;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        background: #fff;
-        color: var(--ink);
-        font: inherit;
-        transition: border-color .18s ease, box-shadow .18s ease;
+        background: #0f172a;
+        color: #e2e8f0;
+        border: 1px solid #475569;
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 14px;
     }
-    textarea { min-height: 250px; margin-top: 20px; padding: 16px; line-height: 1.65; resize: vertical; }
-    input[type=file], select { min-height: 50px; padding: 12px; }
-    input[type=file] { border-style: dashed; background: #fbfcff; }
-    input[type=file]::file-selector-button {
-        margin-right: 12px;
-        padding: 8px 11px;
-        border: 0;
+    textarea { min-height: 190px; resize: vertical; line-height: 1.6; }
+    input[type="file"]:focus, select:focus, textarea:focus { outline: none; border-color: #38bdf8; }
+    .or-divider { text-align: center; color: #64748b; font-size: 12px; font-weight: bold; letter-spacing: 0.1em; margin: 14px 0; text-transform: uppercase; }
+    button { background: #0284c7; color: white; border: none; padding: 11px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 14px; }
+    button:hover { background: #0369a1; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .card { background: #1e293b; padding: 16px; border-radius: 10px; border: 1px solid #334155; }
+    .card span { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .card strong { display: block; margin-top: 6px; font-size: 20px; color: #4ade80; }
+    .text-box {
+        background: #0f172a;
+        border: 1px solid #334155;
         border-radius: 8px;
-        background: #edf2ff;
-        color: #2747b5;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-    }
-    .paste-label { margin-top: 24px; }
-    textarea:focus, input[type=file]:focus-visible, select:focus-visible, button:focus-visible {
-        outline: 3px solid rgba(49, 86, 211, .2);
-        outline-offset: 2px;
-        border-color: var(--accent);
-    }
-    .hint { margin: 9px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
-    .divider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 23px 0 0;
-        color: #8793a8;
-        font-size: .76rem;
-        font-weight: 700;
-        letter-spacing: .1em;
-        text-transform: uppercase;
-    }
-    .divider::before, .divider::after { height: 1px; flex: 1; background: #e8edf5; content: ""; }
-    button {
-        display: inline-flex;
-        min-height: 50px;
-        align-items: center;
-        justify-content: center;
-        margin-top: 16px;
-        padding: 0 22px;
-        border: 0;
-        border-radius: 12px;
-        background: var(--accent);
-        box-shadow: 0 8px 18px rgba(49, 86, 211, .2);
-        color: #fff;
-        font: inherit;
-        font-weight: 750;
-        cursor: pointer;
-        transition: background .18s ease, transform .18s ease;
-    }
-    button:hover { background: var(--accent-dark); transform: translateY(-1px); }
-    .button-arrow { margin-left: 10px; font-size: 1.1rem; }
-    .trust-row { display: flex; flex-wrap: wrap; gap: 10px 20px; margin: 18px 0 0; color: #64748b; font-size: .8rem; }
-    .trust-row span::before { margin-right: 7px; color: #17865c; content: "✓"; font-weight: 800; }
-    .steps { padding: 26px clamp(22px, 4vw, 36px); }
-    .steps h2 { margin-bottom: 20px; }
-    .step-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-    .step { display: flex; align-items: flex-start; gap: 12px; }
-    .step-number {
-        display: grid;
-        width: 32px;
-        height: 32px;
-        flex: 0 0 32px;
-        place-items: center;
-        border-radius: 10px;
-        background: #edf2ff;
-        color: #3156d3;
-        font-size: .82rem;
-        font-weight: 800;
-    }
-    .step strong { display: block; margin: 2px 0 4px; color: #263757; font-size: .88rem; }
-    .step p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.55; }
-    .result {
-        padding: 22px;
-        border: 1px solid #dce5f6;
-        border-left: 4px solid var(--accent);
-        border-radius: 12px;
-        background: #f7f9fe;
-        color: #233454;
-        font-size: 1rem;
-        line-height: 1.85;
-        overflow-wrap: anywhere;
+        padding: 16px;
+        max-height: 380px;
+        overflow-y: auto;
+        line-height: 1.75;
+        font-size: 14px;
         white-space: pre-wrap;
+        word-break: break-word;
     }
-    .error { border-color: #fecdca; background: #fff6f5; color: #912018; }
-    .error p { margin: 0; line-height: 1.6; }
-    .meta { margin: -2px 0 16px; color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
-    .result-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .result-badge { padding: 6px 10px; border-radius: 999px; background: #edf8f2; color: #18764f; font-size: .76rem; font-weight: 750; white-space: nowrap; }
-    footer { padding: 8px 0 0; color: #8793a8; font-size: .78rem; text-align: center; }
-    @media (max-width: 700px) {
-        .wrap { width: min(100% - 28px, 1120px); }
-        .topbar { min-height: 68px; }
-        .hero { grid-template-columns: 1fr; gap: 20px; padding: 46px 0 28px; }
-        .hero-note { max-width: 420px; }
-        .grid { grid-template-columns: 1fr; gap: 18px; }
-        textarea { min-height: 210px; }
-        button { width: 100%; }
-        .step-grid { grid-template-columns: 1fr; gap: 17px; }
-        .result-heading { flex-direction: column; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    .summary-highlight { border-left: 4px solid #38bdf8; }
+    .caption { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+    .alert { background: #7f1d1d; color: #fecaca; border: 1px solid #991b1b; padding: 14px 18px; border-radius: 8px; margin-bottom: 20px; }
+    @media (max-width: 760px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .metrics { grid-template-columns: repeat(2, 1fr); }
     }
 </style>
 </head>
 <body>
-<main class="wrap">
-    <nav class="topbar" aria-label="Main navigation">
-        <a class="brand" href="/" aria-label="IR Summary home">
-            <span class="brand-mark" aria-hidden="true">IR</span>
-            <span>IR Summary</span>
-        </a>
-        <a class="top-link" href="#how-it-works">How it works</a>
-    </nav>
-    <header class="hero">
-        <div class="hero-copy">
-            <p class="eyebrow">Information Retrieval · Extractive NLP</p>
-            <h1>Make long documents easier to read.</h1>
-            <p class="sub">Get a clear, concise summary by selecting the most relevant sentences from your document. Every sentence comes from your original text.</p>
-        </div>
-        <aside class="hero-note">
-            <strong>Simple. Source-based. Offline-friendly.</strong>
-            TF-IDF and TextRank find important ideas without generating new content or calling an AI service.
-        </aside>
-    </header>
-    <section class="card form-card" aria-labelledby="input-heading">
-        <div class="section-heading">
-            <h2 id="input-heading">Start with your document</h2>
-            <p>Upload a file or paste text below. Choose how concise you want the summary to be.</p>
-        </div>
-        <form method="post" enctype="multipart/form-data">
-            <div class="grid">
-                <div class="field">
-                    <label for="document">Upload a document</label>
-                    <input id="document" type="file" name="document" accept=".txt,.pdf,.docx">
-                    <p class="hint">TXT, PDF, or DOCX · Maximum size: 20 MB</p>
-                </div>
-                <div class="field">
-                    <label for="ratio">Summary length</label>
-                    <select id="ratio" name="ratio">
-                        <option value="0.30" {% if ratio == 0.30 %}selected{% endif %}>30%</option>
-                        <option value="0.35" {% if ratio == 0.35 %}selected{% endif %}>35% (Recommended)</option>
-                        <option value="0.40" {% if ratio == 0.40 %}selected{% endif %}>40%</option>
-                    </select>
-                    <p class="hint">Choose how many of the source sentences to keep.</p>
-                </div>
-            </div>
+<div class="container">
+    <div class="topbar">
+        <h1>Document Summarization Tool</h1>
+        <span class="badge-top">IR &amp; NLP Text Engine</span>
+    </div>
 
-            <div class="divider" aria-hidden="true">or paste text</div>
-            <label class="paste-label" for="text">Document text</label>
-            <textarea id="text" name="text" placeholder="Paste a document here to get started...">{{ text }}</textarea>
-            <button type="submit">Generate summary <span class="button-arrow" aria-hidden="true">→</span></button>
-            <p class="trust-row"><span>Original sentences</span><span>No external AI service</span><span>TXT, PDF, DOCX</span></p>
-        </form>
-    </section>
+    <form class="panel" method="POST" enctype="multipart/form-data">
+        <h3>Input Document or Raw Text</h3>
+        <div class="grid-2">
+            <div>
+                <label for="file">Upload Document ({{ supported_exts }})</label>
+                <input id="file" type="file" name="file">
+            </div>
+            <div>
+                <label for="ratio">Summary Compression Ratio</label>
+                <select id="ratio" name="ratio">
+                    <option value="0.2" {% if ratio == "0.2" %}selected{% endif %}>20% — Very Concise</option>
+                    <option value="0.3" {% if ratio == "0.3" %}selected{% endif %}>30% — Balanced (Recommended)</option>
+                    <option value="0.4" {% if ratio == "0.4" %}selected{% endif %}>40% — Detailed</option>
+                    <option value="0.5" {% if ratio == "0.5" %}selected{% endif %}>50% — Half Length</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="or-divider">— OR PASTE RAW TEXT DIRECTLY —</div>
+
+        <div>
+            <label for="text">Document Text</label>
+            <textarea id="text" name="text" placeholder="Paste your article, report, or document text here...">{{ input_text }}</textarea>
+        </div>
+
+        <button type="submit">Generate Summary</button>
+    </form>
 
     {% if error %}
-    <section class="card error" role="alert"><p><strong>Unable to summarize:</strong> {{ error }}</p></section>
+    <div class="alert">{{ error }}</div>
     {% endif %}
 
     {% if summary %}
-    <section class="card" aria-live="polite" aria-labelledby="summary-heading">
-        <div class="result-heading">
-            <div>
-                <h2 id="summary-heading">Your summary</h2>
-                <p class="meta">Source: {{ source_name }} · Requested summary length: {{ ratio_percent }}%</p>
-            </div>
-            <span class="result-badge">Extractive summary</span>
+    <div class="metrics">
+        <div class="card"><span>Source</span><strong>{{ source_label }}</strong></div>
+        <div class="card"><span>Target Ratio</span><strong>{{ (ratio | float * 100) | int }}%</strong></div>
+        <div class="card"><span>Original Words</span><strong>{{ orig_words }}</strong></div>
+        <div class="card"><span>Summary Words</span><strong>{{ summary_words }} ({{ reduction }}% shorter)</strong></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <h3>Extracted Summary</h3>
+            <div class="text-box summary-highlight">{{ summary }}</div>
+            <p class="caption">Key sentences ranked and extracted from the source content.</p>
         </div>
-        <div class="result">{{ summary }}</div>
-    </section>
+        <div class="panel">
+            <h3>Original Source Preview</h3>
+            <div class="text-box">{{ preview_text }}</div>
+            <p class="caption">Source material analyzed by the summarizer.</p>
+        </div>
+    </div>
     {% endif %}
-
-    <section id="how-it-works" class="card steps" aria-labelledby="steps-heading">
-        <h2 id="steps-heading">How it works</h2>
-        <div class="step-grid">
-            <div class="step">
-                <span class="step-number">01</span>
-                <div><strong>Add your document</strong><p>Upload a supported file or paste in your text.</p></div>
-            </div>
-            <div class="step">
-                <span class="step-number">02</span>
-                <div><strong>Find key sentences</strong><p>TF-IDF and TextRank score related sentences.</p></div>
-            </div>
-            <div class="step">
-                <span class="step-number">03</span>
-                <div><strong>Read the summary</strong><p>Important sentences are returned in source order.</p></div>
-            </div>
-        </div>
-    </section>
-    <footer>Built for an Information Retrieval mini-project · Summaries use the source document's wording.</footer>
-</main>
+</div>
 </body>
-</html>
-"""
+</html>"""
 
 
-def allowed_upload(filename: str) -> bool:
-    return bool(filename) and Path(filename).suffix.lower() in SUPPORTED_EXTENSIONS
+def _extract_summary_text(result) -> tuple[str, str]:
+    """Handle either string or structured dictionary/object returns from document_summarizer."""
+    if isinstance(result, str):
+        return result, ""
+    if isinstance(result, dict):
+        summary_str = result.get("summary") or result.get("summary_text") or str(result)
+        orig_str = result.get("original_text") or result.get("text") or ""
+        return str(summary_str), str(orig_str)
+    summary_str = getattr(result, "summary", str(result))
+    orig_str = getattr(result, "original_text", "")
+    return str(summary_str), str(orig_str)
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    text = ""
     summary = ""
+    preview_text = ""
+    input_text = ""
     error = ""
-    source = "Pasted text"
-    ratio = 0.35
+    source_label = "Raw Text"
+    ratio = "0.3"
+    orig_words = 0
+    summary_words = 0
+    reduction = 0
+
+    supported_exts = ", ".join(sorted(SUPPORTED_EXTENSIONS))
 
     if request.method == "POST":
+        ratio = request.form.get("ratio", "0.3")
+        input_text = request.form.get("text", "").strip()
+        uploaded = request.files.get("file")
+
         try:
-            ratio = float(request.form.get("ratio", "0.35"))
-            text = request.form.get("text", "")
-            uploaded = request.files.get("document")
+            ratio_val = float(ratio)
 
             if uploaded and uploaded.filename:
-                if not allowed_upload(uploaded.filename):
-                    raise SummarizationError(
-                        "Unsupported upload. Please choose a TXT, PDF, or DOCX file."
-                    )
-
-                suffix = Path(uploaded.filename).suffix.lower()
-                # The temporary folder removes the upload after summarization.
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_path = Path(temp_dir) / f"document{suffix}"
+                safe_name = Path(uploaded.filename).name
+                source_label = safe_name
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    temp_path = Path(tmp_dir) / safe_name
                     uploaded.save(temp_path)
-                    _, summary = summarize_file(str(temp_path), ratio=ratio)
-                    source = uploaded.filename
-            elif text.strip():
-                summary = summarize_text(text, ratio=ratio)
+                    raw_result = summarize_file(temp_path, ratio=ratio_val)
+                    summary, extracted_orig = _extract_summary_text(raw_result)
+                    if extracted_orig:
+                        preview_text = extracted_orig
+                    elif temp_path.suffix.lower() in {".txt", ".md", ".csv"}:
+                        preview_text = temp_path.read_text(encoding="utf-8", errors="replace")
+                    else:
+                        preview_text = f"[Uploaded binary document: {safe_name}]"
+            elif input_text:
+                source_label = "Pasted Text"
+                raw_result = summarize_text(input_text, ratio=ratio_val)
+                summary, _ = _extract_summary_text(raw_result)
+                preview_text = input_text
             else:
-                raise SummarizationError("Upload a TXT/PDF/DOCX file or paste text first.")
+                error = "Please upload a supported document or paste some text first."
 
-        except (SummarizationError, ValueError) as exc:
+            if summary:
+                summary_words = len(summary.split())
+                orig_words = len(preview_text.split()) if not preview_text.startswith("[Uploaded binary") else 0
+                if orig_words > 0:
+                    reduction = max(0, round((1 - (summary_words / orig_words)) * 100))
+                else:
+                    orig_words = summary_words
+                    reduction = 0
+
+        except SummarizationError as exc:
             error = str(exc)
+        except Exception as exc:
+            error = f"Summarization failed: {exc}"
 
     return render_template_string(
         HTML,
-        text=text,
+        supported_exts=supported_exts,
         summary=summary,
+        preview_text=preview_text,
+        input_text=input_text,
         error=error,
-        source_name=source,
+        source_label=source_label,
         ratio=ratio,
-        ratio_percent=int(ratio * 100),
+        orig_words=orig_words,
+        summary_words=summary_words,
+        reduction=reduction,
     )
 
 
-@app.errorhandler(413)
-def too_large(_):
-    return render_template_string(
-        HTML,
-        text="",
-        summary="",
-        error="The uploaded file is larger than the 20 MB limit.",
-        source_name="",
-        ratio=0.35,
-        ratio_percent=35,
-    ), 413
-
-
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", debug=False)
+    print("=" * 60)
+    print("Document Summarization Web Server Running!")
+    print("Open in Chrome: http://127.0.0.1:5001")
+    print("=" * 60)
+    app.run(host="127.0.0.1", port=5001, debug=False)
