@@ -5,7 +5,6 @@ A final-year Computer Engineering mini-project demonstrating **extractive docume
 ## 1. Project Objective
 
 The system accepts TXT, PDF, and DOCX documents (or pasted text) and creates a source-faithful extractive summary containing approximately **35% of the original sentences**.
-
 The project demonstrates:
 
 - Document preprocessing
